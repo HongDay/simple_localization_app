@@ -11,3 +11,5 @@ This repository will contain the Android application source code for
 2. Wardriving mode: choose a position on the map, scan APs, save the collected datas
 3. Real-time localization mode: scan APs and find the fittest position and show the position on the map
 4. Exporting by email: send the collected data by email for analysis
+
+check
