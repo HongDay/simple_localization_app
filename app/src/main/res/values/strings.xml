@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">simple_localization_app</string>
+    <string name="plz_click">click \'Wifi check\' to scan available Wifis</string>
+    <string name="first_hi">This is first testing app!!</string>
 </resources>
