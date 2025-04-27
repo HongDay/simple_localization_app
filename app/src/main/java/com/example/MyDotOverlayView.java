@@ -22,6 +22,11 @@ public class MyDotOverlayView extends View {
         paint.setAntiAlias(true);
     }
 
+    public void setDotColor(int color) {
+        paint.setColor(color);
+        invalidate();
+    }
+
     public void addPoint(float x, float y) {
         points.add(new PointF(x,y));
         invalidate();

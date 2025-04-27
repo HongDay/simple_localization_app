@@ -31,7 +31,9 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.MyDotOverlayView;
+import com.example.simple_localization_app.data.GroundtruthViewModel;
 import com.example.simple_localization_app.data.InfoRssi;
+import com.example.simple_localization_app.data.LocalizationViewModel;
 import com.example.simple_localization_app.data.MeasurePoint;
 import com.example.simple_localization_app.data.WardrivingViewModel;
 import com.example.simple_localization_app.databinding.ActivityImageBinding;
@@ -49,6 +51,8 @@ public class ImageActivity extends AppCompatActivity {
 
     private ActivityImageBinding binding;
     private WardrivingViewModel viewModel;
+    private LocalizationViewModel localviewModel;
+    private GroundtruthViewModel gtviewModel;
     private static final int REQUEST_CODE_PICK_IMAGE = 1001;
     private static final int REQUEST_PERMISSION = 1000;
 
@@ -71,9 +75,10 @@ public class ImageActivity extends AppCompatActivity {
         mIntentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
 
         viewModel = new ViewModelProvider(this).get(WardrivingViewModel.class);
+        localviewModel = new ViewModelProvider(this).get(LocalizationViewModel.class);
+        gtviewModel = new ViewModelProvider(this).get(GroundtruthViewModel.class);
 
         setting();
-
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -92,13 +97,24 @@ public class ImageActivity extends AppCompatActivity {
                 List<ScanResult> scanResults = mWifiManager.getScanResults();
                 Map<String, Integer> currentScan = new HashMap<>();
 
+                InfoRssi newinfo = new InfoRssi(System.currentTimeMillis());
+
                 for (ScanResult result : scanResults) {
                     currentScan.put(result.BSSID, result.level);
+                    newinfo.addApInfo(result.BSSID,result.level);
                 }
 
                 float[] estimated = estimateLocation(currentScan, viewModel.getAllPoints());
 
                 if(!(estimated[0]==0 && estimated[1]==0)){
+                    MeasurePoint mpoint = new MeasurePoint(estimated[0], estimated[1]);
+                    mpoint.addRssi(newinfo);
+                    localviewModel.addMeasurePoint(mpoint);
+
+                    for (MeasurePoint point : localviewModel.getAllPoints()) {
+                        Log.d("MeasurePoint", point.toString());
+                    }
+
                     binding.dotOverlay2.updatePoint(estimated[0],estimated[1]);
 
                     float normX = estimated[0] / binding.imageView.getWidth();
@@ -124,19 +140,33 @@ public class ImageActivity extends AppCompatActivity {
         clickWardriveButton();
         clickDeleteButton();
         clickLocalButton();
-        clickEmailButton();
+        clickWardriveEmailButton();
+        clickStopLocalButton();
+        clickLocalEmailButton();
+        clickGtPointButton();
+        clickGtEmailButton();
     }
 
-    protected void clickEmailButton(){
-        binding.btnEmail.setOnClickListener(new View.OnClickListener(){
+    protected void clickGtPointButton(){
+        binding.btnGtpoint.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                binding.btnGtpoint.setTextColor(Color.parseColor("#bbbbbb"));
+                clickImageview2();
+            }
+        });
+    }
+
+    protected void clickGtEmailButton(){
+        binding.btnGtemail.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
                 new AlertDialog.Builder(ImageActivity.this)
                         .setTitle("Email Alert")
-                        .setMessage("Would you like to Send Email with drived info?")
+                        .setMessage("Would you like to Send Email with Ground Truth info?")
                         .setPositiveButton("YES", (dialog, which) -> {
-                            File csvFile = exportToCsv(ImageActivity.this, viewModel.getAllPoints());
-                            sendEmailWithCsv(ImageActivity.this, csvFile);
+                            File csvFile = exportToCsv(ImageActivity.this, gtviewModel.getAllPoints(), "groundtruth_data.csv");
+                            sendEmailWithCsv(ImageActivity.this, csvFile, "Ground Truth Data CSV");
                         })
                         .setNegativeButton("NO", null)
                         .show();
@@ -144,7 +174,41 @@ public class ImageActivity extends AppCompatActivity {
         });
     }
 
-    public void sendEmailWithCsv(Context context, File csvFile) {
+    protected void clickLocalEmailButton(){
+        binding.btnLocalizationemail.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                new AlertDialog.Builder(ImageActivity.this)
+                        .setTitle("Email Alert")
+                        .setMessage("Would you like to Send Email with Localization info?")
+                        .setPositiveButton("YES", (dialog, which) -> {
+                            File csvFile = exportToCsv(ImageActivity.this, localviewModel.getAllPoints(), "localization_data.csv");
+                            sendEmailWithCsv(ImageActivity.this, csvFile, "Localization Data CSV");
+                        })
+                        .setNegativeButton("NO", null)
+                        .show();
+            }
+        });
+    }
+
+    protected void clickWardriveEmailButton(){
+        binding.btnWardriveemail.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                new AlertDialog.Builder(ImageActivity.this)
+                        .setTitle("Email Alert")
+                        .setMessage("Would you like to Send Email with Wardriving info?")
+                        .setPositiveButton("YES", (dialog, which) -> {
+                            File csvFile = exportToCsv(ImageActivity.this, viewModel.getAllPoints(), "wardriving_data.csv");
+                            sendEmailWithCsv(ImageActivity.this, csvFile, "Wardriving Data CSV");
+                        })
+                        .setNegativeButton("NO", null)
+                        .show();
+            }
+        });
+    }
+
+    public void sendEmailWithCsv(Context context, File csvFile, String title) {
         Uri fileUri = FileProvider.getUriForFile(
                 context,
                 context.getPackageName() + ".fileprovider",  // Manifest에 설정한 authority
@@ -153,7 +217,7 @@ public class ImageActivity extends AppCompatActivity {
 
         Intent emailIntent = new Intent(Intent.ACTION_SEND);
         emailIntent.setType("text/csv");
-        emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Wardriving Data CSV");
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, title);
         emailIntent.putExtra(Intent.EXTRA_TEXT, "Please find attached the CSV file.");
         emailIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
         emailIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -162,8 +226,7 @@ public class ImageActivity extends AppCompatActivity {
     }
 
 
-    public File exportToCsv(Context context, List<MeasurePoint> pointList) {
-        String fileName = "wardriving_data.csv";
+    public File exportToCsv(Context context, List<MeasurePoint> pointList, String fileName) {
         File csvFile = new File(context.getExternalFilesDir(null), fileName);
 
         try (FileWriter writer = new FileWriter(csvFile)) {
@@ -186,6 +249,44 @@ public class ImageActivity extends AppCompatActivity {
 
         return csvFile;
     }
+
+    @SuppressLint("ClickableViewAccessibility")
+    protected void clickImageview2(){
+        MyDotOverlayView dotOverlay = binding.dotOverlay3;
+        dotOverlay.setDotColor(Color.GREEN);
+        binding.imageView.setOnTouchListener((v, event) -> {
+            if(event.getAction() == MotionEvent.ACTION_DOWN){
+                float x = event.getX();
+                float y = event.getY();
+                dotOverlay.addPoint(x,y);
+
+                new AlertDialog.Builder(this)
+                        .setTitle("GT Add Alert")
+                        .setMessage("Would you like to add Ground Truth here?")
+                        .setPositiveButton("YES", (dialog, which) -> {
+                            InfoRssi newinfo = new InfoRssi(System.currentTimeMillis());
+                            newinfo.addApInfo("0",0);
+                            MeasurePoint mpoint = new MeasurePoint(x, y);
+                            mpoint.addRssi(newinfo);
+                            gtviewModel.addMeasurePoint(mpoint);
+
+                            for (MeasurePoint point : gtviewModel.getAllPoints()) {
+                                Log.d("MeasurePoint", point.toString());
+                            }
+                        })
+                        .setNegativeButton("NO", (dialog, which) -> {
+                            dotOverlay.removeLastPoint();
+                        })
+                        .setOnCancelListener(dialog -> {
+                            dotOverlay.removeLastPoint();
+                        })
+                        .show();
+                return true;
+            }
+            return false;
+        });
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     protected void clickImageview(){
         MyDotOverlayView dotOverlay = binding.dotOverlay;
@@ -217,12 +318,42 @@ public class ImageActivity extends AppCompatActivity {
         });
     }
 
+    protected void clickStopLocalButton(){
+        binding.btnLocalizationstop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                scanHandler.removeCallbacks(scanRunnable);
+                Log.d(TAG, "WiFi scan stopped.");
+
+                unregisterReceiver(mReceiver);
+                Log.d(TAG, "Receiver unregistered.");
+
+                binding.btnLocalizationstart.setVisibility(View.VISIBLE);
+                binding.btnLocalizationstop.setVisibility(View.GONE);
+                binding.tvLocal.setVisibility(View.GONE);
+                binding.tvTop1.setText("Waiting Mode");
+                binding.tvTop1.setTextColor(Color.GRAY);
+                binding.btnGtpoint.setVisibility(View.GONE);
+                binding.imageView.setOnTouchListener(null);
+            }
+        });
+    }
+
     protected void clickLocalButton(){
-        binding.btnLocalization.setOnClickListener(new View.OnClickListener() {
+        binding.btnLocalizationstart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){
                 //binding.dotOverlay.clearall();
                 registerReceiver(mReceiver,mIntentFilter);
+                binding.tvTop1.setText("Localization mode");
+                binding.tvTop1.setTextColor(Color.BLUE);
+                binding.btnWardriving.setTextColor(Color.WHITE);
+                binding.btnLocalizationstart.setVisibility(View.GONE);
+                binding.btnLocalizationstop.setVisibility(View.VISIBLE);
+                binding.btnLocalizationemail.setVisibility(View.VISIBLE);
+                binding.btnGtpoint.setVisibility(View.VISIBLE);
+                binding.btnGtemail.setVisibility(View.VISIBLE);
+                binding.imageView.setOnTouchListener(null);
                 scanHandler = new Handler();
                 scanRunnable = new Runnable() {
                     @Override
@@ -339,7 +470,22 @@ public class ImageActivity extends AppCompatActivity {
                             binding.dotOverlay.clearall();
                             binding.imageView.setImageResource(android.R.drawable.ic_menu_report_image);
                             binding.imageView.setOnTouchListener(null);
+                            binding.btnWardriveemail.setVisibility(View.GONE);
+                            binding.btnLocalizationstop.setVisibility(View.GONE);
+                            binding.btnLocalizationemail.setVisibility(View.GONE);
+                            binding.btnLocalizationstart.setVisibility(View.GONE);
+                            binding.tvLocal.setVisibility(View.GONE);
                             viewModel.reset();
+                            if (scanHandler != null && scanRunnable != null) {
+                                scanHandler.removeCallbacks(scanRunnable);
+                                Log.d(TAG, "WiFi scan stopped.");
+                            }
+                            try {
+                                unregisterReceiver(mReceiver);
+                                Log.d(TAG, "Receiver unregistered.");
+                            } catch (IllegalArgumentException e) {
+                                Log.w(TAG, "Receiver was already unregistered.");
+                            }
                         })
                         .setNegativeButton("NO", null)
                         .show();
@@ -352,10 +498,15 @@ public class ImageActivity extends AppCompatActivity {
         binding.btnWardriving.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){
-                binding.tvTop1.setText("Wardriving Mode");
-                binding.tvTop1.setTextColor(Color.RED);
-                binding.btnWardriving.setTextColor(Color.parseColor("#bbbbbb"));
-                clickImageview();
+                if(binding.btnLocalizationstop.getVisibility() == View.VISIBLE){
+                    binding.tvLocal.setText("!!!!!! Cannot start wardriving !! Stop Localization First!!");
+                }
+                else{
+                    binding.tvTop1.setText("Wardriving Mode");
+                    binding.tvTop1.setTextColor(Color.RED);
+                    binding.btnWardriving.setTextColor(Color.parseColor("#bbbbbb"));
+                    clickImageview();
+                }
             }
         });
     }
@@ -394,8 +545,8 @@ public class ImageActivity extends AppCompatActivity {
     public void removeLastDotOverlayPoint() {
         binding.dotOverlay.removeLastPoint();
     }
-    public void visibleLocalizationBtn() {binding.btnLocalization.setVisibility(View.VISIBLE);}
-    public void visibleEmailBtn() {binding.btnEmail.setVisibility(View.VISIBLE);}
+    public void visibleLocalizationBtn() {binding.btnLocalizationstart.setVisibility(View.VISIBLE);}
+    public void visibleEmailBtn() {binding.btnWardriveemail.setVisibility(View.VISIBLE);}
     /*
     @Override
     public void onResume(){
