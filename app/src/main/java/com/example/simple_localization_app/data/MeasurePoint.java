@@ -1,5 +1,6 @@
 package com.example.simple_localization_app.data;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,6 @@ public class MeasurePoint {
         this.y = y;
         this.apList = new ArrayList<>();
     }
-
     public void addRssi(InfoRssi records){
         apList.add(records);
     }

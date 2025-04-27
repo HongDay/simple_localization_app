@@ -102,6 +102,17 @@
         app:layout_constraintTop_toBottomOf="@id/tv_top1"
         app:layout_constraintBottom_toBottomOf="parent" />
 
+    <com.example.MyDotOverlayView
+        android:id="@+id/dotOverlay3"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="200dp"
+        android:layout_marginBottom="30dp"
+        android:padding="10dp"
+        android:background="@android:color/transparent"
+        app:layout_constraintTop_toBottomOf="@id/tv_top1"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
     <Button
         android:id="@+id/btn_wardriving"
         android:layout_width="wrap_content"
@@ -114,18 +125,18 @@
         app:layout_constraintTop_toBottomOf="@id/tv_top1"/>
 
     <Button
-        android:id="@+id/btn_email"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Export email"
-        android:layout_marginTop="10dp"
-        android:layout_marginStart="20dp"
+        android:id="@+id/btn_wardriveemail"
+        android:layout_width="120dp"
+        android:layout_height="50dp"
+        android:text="send email wardrive data"
+        android:textSize="10sp"
+        android:layout_marginTop="5dp"
         android:visibility="gone"
-        app:layout_constraintStart_toEndOf="@id/btn_wardriving"
-        app:layout_constraintTop_toBottomOf="@id/tv_top1"/>
+        app:layout_constraintStart_toStartOf="@id/btn_wardriving"
+        app:layout_constraintTop_toBottomOf="@id/btn_wardriving"/>
 
     <Button
-        android:id="@+id/btn_localization"
+        android:id="@+id/btn_localizationstart"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Localization"
@@ -135,6 +146,58 @@
         android:backgroundTint="#5577ff"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_top1"/>
+
+    <Button
+        android:id="@+id/btn_localizationstop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stop localization"
+        android:textSize="10sp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="20dp"
+        android:visibility="gone"
+        android:backgroundTint="#5577ff"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_top1"/>
+
+    <Button
+        android:id="@+id/btn_localizationemail"
+        android:layout_width="130dp"
+        android:layout_height="50dp"
+        android:text="Send email localization data"
+        android:textSize="10sp"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="20dp"
+        android:visibility="gone"
+        android:backgroundTint="#5577ff"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_top1" />
+
+    <Button
+        android:id="@+id/btn_gtpoint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Point ground truth"
+        android:textSize="11sp"
+        android:layout_marginTop="10dp"
+        android:visibility="gone"
+        android:backgroundTint="#44aa11"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_top1" />
+
+    <Button
+        android:id="@+id/btn_gtemail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="send email gt"
+        android:textSize="12sp"
+        android:layout_marginTop="5dp"
+        android:visibility="gone"
+        android:backgroundTint="#44aa11"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_gtpoint" />
 
     <FrameLayout
         android:id="@+id/fragment_container"
