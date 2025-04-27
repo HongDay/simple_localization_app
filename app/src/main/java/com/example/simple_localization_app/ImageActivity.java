@@ -97,14 +97,17 @@ public class ImageActivity extends AppCompatActivity {
                 }
 
                 float[] estimated = estimateLocation(currentScan, viewModel.getAllPoints());
-                binding.dotOverlay2.updatePoint(estimated[0],estimated[1]);
 
-                float normX = estimated[0] / binding.imageView.getWidth();
-                float normY = estimated[1] / binding.imageView.getHeight();
-                binding.tvLocation.setText(String.format("location : (%.2f, %.2f)", normX, normY));
+                if(!(estimated[0]==0 && estimated[1]==0)){
+                    binding.dotOverlay2.updatePoint(estimated[0],estimated[1]);
 
-                binding.tvLocal.setText("Localization : Location updated !");
-                Log.e(TAG, "Scan results displayed!!");
+                    float normX = estimated[0] / binding.imageView.getWidth();
+                    float normY = estimated[1] / binding.imageView.getHeight();
+                    binding.tvLocation.setText(String.format("location : (%.2f, %.2f)", normX, normY));
+
+                    binding.tvLocal.setText("Localization : Location updated !");
+                    Log.e(TAG, "Scan results displayed!!");
+                }
             } else {
                 Log.e(TAG, "@@@@@ no permission for scanning !!");
             }
@@ -253,6 +256,10 @@ public class ImageActivity extends AppCompatActivity {
 
         distances.sort(Comparator.comparingDouble(pair -> pair.second));
 
+        if (distances.size() < 3) {
+            binding.tvLocal.setText("Not enough wardriving points !! (at least 3)");
+            return new float[]{0,0};
+        }
         List<Pair<MeasurePoint, Double>> nearestK = distances.subList(0,3);
 
         double sumWeights = 0;
