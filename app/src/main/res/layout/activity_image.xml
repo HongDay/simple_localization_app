@@ -53,8 +53,46 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:srcCompat="@android:drawable/ic_menu_report_image" />
 
+    <TextView
+        android:id="@+id/tv_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="(x, y)"
+        android:layout_marginBottom="20dp"
+        android:layout_marginEnd="10dp"
+        android:textSize="12sp"
+        android:textColor="#0000ff"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="@id/imageView"
+        app:layout_constraintBottom_toTopOf="@id/imageView"/>
+
+    <TextView
+        android:id="@+id/tv_local"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Localization .."
+        android:layout_marginBottom="15dp"
+        android:textStyle="bold"
+        android:textSize="15sp"
+        android:textColor="#4422aa"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/imageView"/>
+
     <com.example.MyDotOverlayView
         android:id="@+id/dotOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="200dp"
+        android:layout_marginBottom="30dp"
+        android:padding="10dp"
+        android:background="@android:color/transparent"
+        app:layout_constraintTop_toBottomOf="@id/tv_top1"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <com.example.MyDotOverlayView2
+        android:id="@+id/dotOverlay2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="200dp"
@@ -73,6 +111,29 @@
         android:layout_marginStart="20dp"
         android:visibility="gone"
         app:layout_constraintStart_toEndOf="@id/btn_deleteimg"
+        app:layout_constraintTop_toBottomOf="@id/tv_top1"/>
+
+    <Button
+        android:id="@+id/btn_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Export email"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="20dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@id/btn_wardriving"
+        app:layout_constraintTop_toBottomOf="@id/tv_top1"/>
+
+    <Button
+        android:id="@+id/btn_localization"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Localization"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="20dp"
+        android:visibility="gone"
+        android:backgroundTint="#5577ff"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_top1"/>
 
     <FrameLayout

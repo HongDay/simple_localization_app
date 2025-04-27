@@ -40,7 +40,7 @@ public class ScanFragment extends Fragment {
     private WifiManager mWifiManager;
     private IntentFilter mIntentFilter;
     private static final String TAG = "ScanFragment";
-    private boolean isScanRequested = true;
+    private boolean isScanRequested = false;
 
     private int scanCount = 0;
     private Handler scanHandler;
@@ -57,29 +57,29 @@ public class ScanFragment extends Fragment {
                     Log.e(TAG, "Ignoared : onRceive called while scan request is failed");
                     return;
                 }
+                else {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        List<ScanResult> scanResults = mWifiManager.getScanResults();
+                        InfoRssi newinfo = new InfoRssi(System.currentTimeMillis());
+                        String mApStr = "";
+                        for (ScanResult result : scanResults) {
+                            mApStr = mApStr + result.SSID + "; ";
+                            mApStr = mApStr + result.BSSID + "; ";
+                            mApStr = mApStr + result.capabilities + "; ";
+                            mApStr = mApStr + result.frequency + " MHz;";
+                            mApStr = mApStr + result.level + " dBm\n\n";
+                            newinfo.addApInfo(result.BSSID,result.level);
+                        }
+                        setTextView(mApStr);
 
-                if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    List<ScanResult> scanResults = mWifiManager.getScanResults();
-                    InfoRssi newinfo = new InfoRssi(System.currentTimeMillis());
-                    String mApStr = "";
-                    for (ScanResult result : scanResults) {
-                        mApStr = mApStr + result.SSID + "; ";
-                        mApStr = mApStr + result.BSSID + "; ";
-                        mApStr = mApStr + result.capabilities + "; ";
-                        mApStr = mApStr + result.frequency + " MHz;";
-                        mApStr = mApStr + result.level + " dBm\n\n";
-                        newinfo.addApInfo(result.BSSID,result.level);
+                        MeasurePoint mpoint = viewModel.getLastPoint();
+                        mpoint.addRssi(newinfo);
+
+                        Log.e(TAG, "Scan results stored!!");
+                    } else {
+                        Log.e(TAG, "@@@@@ no permission for scanning !!");
                     }
-                    setTextView(mApStr);
-
-                    MeasurePoint mpoint = viewModel.getLastPoint();
-                    mpoint.addRssi(newinfo);
-
-                    Log.e(TAG, "Scan results stored!!");
-                } else {
-                    Log.e(TAG, "@@@@@ no permission for scanning !!");
                 }
-
             }
             else{
                 Log.e(TAG, "Scan results unavailable!!!");
@@ -122,6 +122,9 @@ public class ScanFragment extends Fragment {
         binding.btnScanyes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                ImageActivity activity = (ImageActivity) requireActivity();
+                activity.visibleLocalizationBtn();
+                activity.visibleEmailBtn();
                 requireActivity()
                         .getSupportFragmentManager()
                         .popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -159,6 +162,7 @@ public class ScanFragment extends Fragment {
                     public void run() {
                         if (scanCount >= 4) {
                             // 모든 스캔 완료 후 처리
+                            isScanRequested = false;
                             for (MeasurePoint point : viewModel.getAllPoints()) {
                                 Log.d("MeasurePoint", point.toString());
                             }
@@ -171,11 +175,14 @@ public class ScanFragment extends Fragment {
                         if (!scanStarted) {
                             isScanRequested = false;
                             Log.e(TAG, "WiFi scan failed..");
-                            setTextView("Maximum scan limit exceeded (4times/min) Try at least 1 min later!");
+                            setTextView("Maximum scan limit exceeded (4times/min) Press the button again at least 1 min later!");
+                            scanCount = 0;
+                            scanHandler.removeCallbacks(scanRunnable);
+                            return;
                         } else {
                             isScanRequested = true;
                             Log.e(TAG, "▶ Scan request #" + (scanCount + 1) + " success");
-                            binding.tvIters.setText("Scan #" + (scanCount + 1) + " requested...");
+                            binding.tvIters.setText("Scan #" + (scanCount + 1) + " requesting...");
                         }
                         scanCount++;
                         scanHandler.postDelayed(this, 8000);
