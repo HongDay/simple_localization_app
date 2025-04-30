@@ -8,6 +8,7 @@ import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.view.View;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +37,33 @@ public class MyDotOverlayView extends View {
         if(!points.isEmpty()){
             points.remove(points.size() -1);
             invalidate();
+        }
+    }
+
+    public float[] findNearstPoint(float x, float y, float threshold){
+        for (PointF point : points){
+            float dx = point.x - x;
+            float dy = point.y - y;
+            float distanceSquared = dx * dx + dy * dy;
+            if (distanceSquared <= threshold * threshold){
+                return new float[]{point.x, point.y};
+            }
+        }
+        return null;
+    }
+
+    public void removeNearestPoint(float x, float y){
+        float threshold = 1f;
+        for (int i = 0; i < points.size(); i++) {
+            PointF point = points.get(i);
+            float dx = point.x - x;
+            float dy = point.y - y;
+            float distanceSquared = dx * dx + dy * dy;
+            if (distanceSquared <= threshold * threshold) {
+                points.remove(i);
+                invalidate();
+                break;
+            }
         }
     }
 
