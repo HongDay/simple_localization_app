@@ -20,6 +20,7 @@ import android.util.Pair;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.Nullable;
@@ -294,24 +295,68 @@ public class ImageActivity extends AppCompatActivity {
             if(event.getAction() == MotionEvent.ACTION_DOWN){
                 float x = event.getX();
                 float y = event.getY();
-                dotOverlay.addPoint(x,y);
 
-                new AlertDialog.Builder(this)
-                        .setTitle("Scan Alert")
-                        .setMessage("Would you like to Scan here?")
-                        .setPositiveButton("YES", (dialog, which) -> {
-                            MeasurePoint newpoint = new MeasurePoint(x, y);
-                            viewModel.addMeasurePoint(newpoint);
-                            replaceFragment(new ScanFragment());
-                        })
-                        .setNegativeButton("NO", (dialog, which) -> {
-                            dotOverlay.removeLastPoint();
-                        })
-                        .setOnCancelListener(dialog -> {
-                            dotOverlay.removeLastPoint();
-                        })
-                        .show();
+                float threshold = 30f;
+                float[] nearestPoint = dotOverlay.findNearstPoint(x,y,threshold);
 
+                if (nearestPoint != null){
+                    new AlertDialog.Builder(this)
+                            .setTitle("What would you like to do for this location?")
+                            .setItems(new CharSequence[]{"1. Add new WiFi data", "2. Delete all data", "3. See the data", "4. Cancel"},
+                                    (dialog, which) -> {
+                                        switch (which) {
+                                            case 0:
+                                                Bundle bundle = new Bundle();
+                                                bundle.putFloat("x", nearestPoint[0]);
+                                                bundle.putFloat("y", nearestPoint[1]);
+
+                                                ScanFragment scanFragment = new ScanFragment();
+                                                scanFragment.setArguments(bundle);
+
+                                                replaceFragment(scanFragment);
+                                                break;
+                                            case 1:
+                                                viewModel.removeCoordinatePoint(nearestPoint[0],nearestPoint[1]);
+                                                dotOverlay.removeNearestPoint(nearestPoint[0],nearestPoint[1]);
+                                                Toast.makeText(this, "data succesfully removed", Toast.LENGTH_SHORT).show();
+                                                break;
+                                            case 2:
+                                                Bundle bundle2 = new Bundle();
+                                                bundle2.putFloat("x", nearestPoint[0]);
+                                                bundle2.putFloat("y", nearestPoint[1]);
+
+                                                SeeFragment seeFragment = new SeeFragment();
+                                                seeFragment.setArguments(bundle2);
+
+                                                replaceFragment(seeFragment);
+                                                break;
+                                            case 3:
+                                                dialog.dismiss();
+                                                break;
+                                        }
+                                    })
+                            .show();
+                }
+
+                else{
+                    dotOverlay.addPoint(x,y);
+
+                    new AlertDialog.Builder(this)
+                            .setTitle("Scan Alert")
+                            .setMessage("Would you like to Scan here?")
+                            .setPositiveButton("YES", (dialog, which) -> {
+                                MeasurePoint newpoint = new MeasurePoint(x, y);
+                                viewModel.addMeasurePoint(newpoint);
+                                replaceFragment(new ScanFragment());
+                            })
+                            .setNegativeButton("NO", (dialog, which) -> {
+                                dotOverlay.removeLastPoint();
+                            })
+                            .setOnCancelListener(dialog -> {
+                                dotOverlay.removeLastPoint();
+                            })
+                            .show();
+                }
                 return true;
             }
             return false;
@@ -369,7 +414,7 @@ public class ImageActivity extends AppCompatActivity {
                             Log.e(TAG, "Scan request success");
                             binding.tvLocal.setText("Localizatoin : Scanning ..");
                         }
-                        scanHandler.postDelayed(this, 10000);
+                        scanHandler.postDelayed(this, 7000);
                     }
                 };
                 scanHandler.post(scanRunnable);
@@ -468,6 +513,11 @@ public class ImageActivity extends AppCompatActivity {
                             binding.tvTop1.setText("Image Loading");
                             binding.tvTop1.setTextColor(Color.parseColor("#555555"));
                             binding.dotOverlay.clearall();
+                            binding.dotOverlay2.clearDot();
+                            binding.dotOverlay3.clearall();
+                            binding.btnGtpoint.setVisibility(View.GONE);
+                            binding.btnGtemail.setVisibility(View.GONE);
+                            binding.tvLocation.setText("(x,y)");
                             binding.imageView.setImageResource(android.R.drawable.ic_menu_report_image);
                             binding.imageView.setOnTouchListener(null);
                             binding.btnWardriveemail.setVisibility(View.GONE);

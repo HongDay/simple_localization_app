@@ -26,6 +26,28 @@ public class WardrivingViewModel extends ViewModel {
         }
     }
 
+    public void removeCoordinatePoint(float x, float y) {
+        float threshold = 1f;
+        for (int i = 0; i < pointList.size(); i++){
+            MeasurePoint point = pointList.get(i);
+            if (Math.abs(point.x -x) < threshold && Math.abs(point.y - y) < threshold){
+                pointList.remove(i);
+                break;
+            }
+        }
+    }
+
+    public MeasurePoint findMeasurePointByCoordinates(float x, float y) {
+        float threshold = 1f;
+        for (MeasurePoint point : getAllPoints()) {
+            if (Math.abs(point.x - x) < threshold && Math.abs(point.y - y) < threshold) {
+                return point;
+            }
+        }
+        return null;
+    }
+
+
     public void reset(){
         pointList.clear();
     }

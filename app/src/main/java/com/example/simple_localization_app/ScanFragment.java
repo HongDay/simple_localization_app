@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.icu.text.IDNA;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -31,6 +32,7 @@ import com.example.simple_localization_app.data.WardrivingViewModel;
 import com.example.simple_localization_app.databinding.ActivityImageBinding;
 import com.example.simple_localization_app.databinding.FragmentScanBinding;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ScanFragment extends Fragment {
@@ -45,6 +47,11 @@ public class ScanFragment extends Fragment {
     private int scanCount = 0;
     private Handler scanHandler;
     private Runnable scanRunnable;
+
+    private Float targetX = null;
+    private Float targetY = null;
+
+    private final List<InfoRssi> tempRssiList = new ArrayList<>();
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -72,8 +79,7 @@ public class ScanFragment extends Fragment {
                         }
                         setTextView(mApStr);
 
-                        MeasurePoint mpoint = viewModel.getLastPoint();
-                        mpoint.addRssi(newinfo);
+                        tempRssiList.add(newinfo);
 
                         Log.e(TAG, "Scan results stored!!");
                     } else {
@@ -96,6 +102,16 @@ public class ScanFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentScanBinding.inflate(inflater,container,false);
+
+        if (getArguments() != null) {
+            targetX = getArguments().getFloat("x", Float.NaN);
+            targetY = getArguments().getFloat("y", Float.NaN);
+            if (Float.isNaN(targetX) || Float.isNaN(targetY)) {
+                targetX = null;
+                targetY = null;
+            }
+        }
+
         return binding.getRoot();
     }
 
@@ -116,12 +132,26 @@ public class ScanFragment extends Fragment {
         clickCheckbtn();
         clickYesbtn();
         clickNobtn();
+        if(targetX != null && targetY != null){
+            binding.tvSave.setText("2 Scan done. Would you like to add this data to this point?");
+        }
     }
 
     protected void clickYesbtn(){
         binding.btnScanyes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                MeasurePoint mpoint;
+                if (targetX != null && targetY != null) {
+                    mpoint = viewModel.findMeasurePointByCoordinates(targetX, targetY);
+                } else {
+                    mpoint = viewModel.getLastPoint();
+                }
+
+                for (InfoRssi info : tempRssiList) {
+                    mpoint.addRssi(info);
+                }
+
                 ImageActivity activity = (ImageActivity) requireActivity();
                 activity.visibleLocalizationBtn();
                 activity.visibleEmailBtn();
@@ -136,9 +166,12 @@ public class ScanFragment extends Fragment {
         binding.btnScanno.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                viewModel.removeLastPoint();
+                tempRssiList.clear();
                 ImageActivity activity = (ImageActivity) requireActivity();
-                activity.removeLastDotOverlayPoint();
+                if(targetX == null || targetY == null){
+                    viewModel.removeLastPoint();
+                    activity.removeLastDotOverlayPoint();
+                }
                 requireActivity()
                         .getSupportFragmentManager()
                         .popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -160,7 +193,7 @@ public class ScanFragment extends Fragment {
                 scanRunnable = new Runnable() {
                     @Override
                     public void run() {
-                        if (scanCount >= 4) {
+                        if (scanCount >= 2) {
                             // 모든 스캔 완료 후 처리
                             isScanRequested = false;
                             for (MeasurePoint point : viewModel.getAllPoints()) {

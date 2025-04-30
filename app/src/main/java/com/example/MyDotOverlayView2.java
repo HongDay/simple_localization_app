@@ -1,5 +1,6 @@
 package com.example;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -15,6 +16,9 @@ public class MyDotOverlayView2 extends View {
     private float y;
     private boolean isinit = false;
 
+    private ValueAnimator animatorX;
+    private ValueAnimator animatorY;
+
     public MyDotOverlayView2(Context context, AttributeSet attrs) {
         super(context, attrs);
         paint.setColor(Color.BLUE);
@@ -23,9 +27,41 @@ public class MyDotOverlayView2 extends View {
     }
 
     public void updatePoint(float x_, float y_){
-        x = x_;
-        y = y_;
-        isinit = true;
+        if (!isinit) {
+            x = x_;
+            y = y_;
+            isinit = true;
+            invalidate();
+            return;
+        }
+        if(animatorX != null && animatorX.isRunning()) animatorX.cancel();
+        if (animatorY != null && animatorY.isRunning()) animatorY.cancel();
+
+        animatorX = ValueAnimator.ofFloat(x, x_);
+        animatorY = ValueAnimator.ofFloat(y, y_);
+
+        animatorX.setDuration(300);
+        animatorY.setDuration(300);
+
+        animatorX.addUpdateListener(animation -> {
+            x = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+
+        animatorY.addUpdateListener(animation -> {
+            y = (float) animation.getAnimatedValue();
+            invalidate();
+        });
+
+        animatorX.start();
+        animatorY.start();
+
+    }
+
+    public void clearDot() {
+        isinit = false;
+        if (animatorX != null && animatorX.isRunning()) animatorX.cancel();
+        if (animatorY != null && animatorY.isRunning()) animatorY.cancel();
         invalidate();
     }
 
