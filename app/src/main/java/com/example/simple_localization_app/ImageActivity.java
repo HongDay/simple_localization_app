@@ -469,11 +469,11 @@ public class ImageActivity extends AppCompatActivity {
                 sum += 10000;
             }
              */
-            /*
             else{
+                int scanRssi = currentScan.get(bssid);
                 sum += Math.pow(scanRssi, 2);
                 count++;
-             */
+            }
         }
         return (double) Math.sqrt(sum/count);
     }
