@@ -6,10 +6,10 @@ This repository is for **CSE465: Mobile_Computing class - assignment 1**  <br/>
 
 ## 🤲 Additional assignment submission files
 
-- [Report](https://github.com/HongDay/simple_localization_app/assignment1_report_20201325.pdf)
-- [Experiment Videos](https://github.com/HongDay/simple_localization_app/experiment_video)
-- [Screen_Captures](https://github.com/HongDay/simple_localization_app/Screen_captures)
-- [datas](https://github.com/HongDay/simple_localization_app/data)
+- [Report](https://github.com/HongDay/simple_localization_app/tree/master/assignment1_report_20201325.pdf)
+- [Experiment Videos](https://github.com/HongDay/simple_localization_app/tree/master/experiment_video)
+- [Screen_Captures](https://github.com/HongDay/simple_localization_app/tree/master/Screen_captures)
+- [datas](https://github.com/HongDay/simple_localization_app/tree/master/data)
 <br/>
 
 
